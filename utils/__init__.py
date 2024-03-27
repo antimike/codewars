@@ -5,8 +5,9 @@ from rich.logging import RichHandler
 
 def get_logger(name):
     logger = logging.getLogger(name)
-    handler = RichHandler()
-    logger.addHandler(handler)
+    if not logger.handlers:
+        handler = RichHandler()
+        logger.addHandler(handler)
     return logger
 
 
