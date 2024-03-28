@@ -3,11 +3,12 @@ import logging
 from rich.logging import RichHandler
 
 
-def get_logger(name):
+def get_logger(name, level=logging.NOTSET, **rich_kwargs):
     logger = logging.getLogger(name)
     if not logger.handlers:
-        handler = RichHandler()
+        handler = RichHandler(**rich_kwargs)
         logger.addHandler(handler)
+    logger.setLevel(level)
     return logger
 
 
