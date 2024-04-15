@@ -1,4 +1,6 @@
+from collections import Counter
 from functools import reduce
+from itertools import combinations
 from typing import Generator, TypeAlias
 
 from utils import get_logger
@@ -6,8 +8,109 @@ from utils import get_logger
 logger = get_logger(__name__)
 
 
-class YouDie(Exception):
-    pass
+def pos(i, j):
+    return 1 << (4 * i + j)
+
+
+ADJ = {
+    pos(i, j): {
+        pos(ni, nj)
+        for ni in range(4)
+        for nj in range(4)
+        if abs(i - ni) + abs(j - nj) == 1
+    }
+    for i in range(4)
+    for j in range(4)
+}
+
+PITMASKS = [
+    {x for x in range(2**16) if x.bit_count() == N and not x % 2} for N in range(1, 4)
+]
+
+# P                     --> AND(p for p in pitmasks)
+# P?                    --> OR(p for p in pitmasks)
+# S := ~(P?)
+# remove pitmask p      --> P =
+
+
+def combos(k):
+    return (sum(2 ** (j + 1) for j in p) for p in combinations(range(15), k))
+
+
+def pie(npits):
+    # HORRIBLE
+    # return {
+    #     n: {
+    #         p: {
+    #             q
+    #             for q in range(2**16)
+    #             if q.bit_count() == npits and (p & q) and not q % 2
+    #         }
+    #         for p in range(2**16)
+    #         if p.bit_count() == n
+    #     }
+    #     for n in range(1, npits + 1)
+    # }
+    for n in range(1, npits + 1):
+        ...
+
+
+class HittingSet:
+    def __init__(self):
+        self._sets = []
+        self._elems = dict()
+        self._kernel = set()
+
+    def add_set(self, S: set):
+        for x in S:
+            self._elems.setdefault(x, []).append(len(self._sets))
+        self._sets.append(S)
+        if not S.intersection(self._kernel):
+            self._update_kernel()
+
+    def _update_kernel(self):
+        self._kernel.clear()
+        for x, l in sorted(
+            self._elems.items(), key=lambda it: len(it[1]), reverse=True
+        ):
+            if not any(self._sets[s].intersection(self._kernel) for s in l):
+                self._kernel.add(x)
+
+
+def solution(cave):
+    cave = {pos(i, j): cave[i][j] for i in range(4) for j in range(4)}
+    npits = len([p for p, r in cave.items() if r == "P"])
+    pitmasks = {x for x in range(2**16) if x.bit_count() == npits and not x % 2}
+    curr = 1
+    seen = set()
+    while not cave[curr] == "G":
+        ...
+
+
+def minimal_solution(cave):
+    cave = {(i, j): cave[i][j] for i in range(4) for j in range(4)}
+    binom15 = {0: 1, 1: 15, 2: 15 * 7}
+    num_pits = sum(sum(c == "P" for c in row) for row in cave)
+    pit_counter = Counter(
+        {(i, j): binom15[num_pits - 1] for i in range(4) for j in range(4)}
+    )
+    pit_counter[0, 0] = 0
+    adj = {
+        (i, j): {
+            (ni, nj)
+            for ni in range(4)
+            for nj in range(4)
+            if abs(i - ni) + abs(j - nj) == 1
+        }
+        for i in range(4)
+        for j in range(4)
+    }
+    seen, safe = set(), set()
+    maybe_wumpus = set(pit_counter.keys()).difference({(0, 0)})
+    pos = (0, 0)
+    while not cave[pos] == "G":
+        if any(cave[n] == "P" for n in adj[pos]):
+            ...
 
 
 class WumpusCave:
