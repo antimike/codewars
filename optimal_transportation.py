@@ -9,6 +9,77 @@ from utils import get_logger
 logger = get_logger(__name__)
 
 
+class Heap:
+    def __init__(self, **elems):
+        self._elems = []
+        self._pos = {}
+        self._priority = {}
+        for elem, priority in elems.items():
+            self.insert(elem, priority)
+
+    def insert(self, elem, priority):
+        self._elems.append(elem)
+        self._priority[elem] = priority
+        self._pos[elem] = len(self._elems) - 1
+        idx = self._upheap(len(self._elems) - 1)
+        self._downheap(idx)
+
+    def discard(self, elem):
+        if elem not in self._pos:
+            return None
+        pos = self._pos[elem]
+        P = self._priority[elem]
+        self._priority[elem] = -float("inf")
+        idx = self._upheap(pos)
+        assert idx == 0, "Failed to upheap discarded element"
+        self.pop_min()
+        return P
+
+    def pop_min(self):
+        self._switch(0, len(self._elems) - 1)
+        elem = self._elems.pop()
+        P = self._priority[elem]
+        del self._pos[elem]
+        del self._priority[elem]
+        self._downheap(0)
+        return elem, P
+
+    def get_priority(self, elem):
+        return self._priority[elem]
+
+    def set_priority(self, elem, priority):
+        self.discard(elem)
+        self.insert(elem, priority)
+
+    def _upheap(self, pos):
+        elem = self._elems[pos]
+        P = self._priority[elem]
+        while pos > 0 and P < self._priority[self._elems[ppos := ((pos - 1) // 2)]]:
+            self._switch(pos, ppos)
+            pos = ppos
+        return pos
+
+    def _downheap(self, pos):
+        elem = self._elems[pos]
+        P = self._priority[elem]
+        while True:
+            min_child = min(2 * pos + 1, 2 * pos + 2, key=self._pos_priority)
+            if self._pos_priority(min_child) >= P:
+                return pos
+            self._switch(pos, min_child)
+            pos = min_child
+
+    def _switch(self, p1, p2):
+        e1, e2 = self._elems[p1], self._elems[p2]
+        self._elems[p1], self._elems[p2] = e2, e1
+        self._pos[e1], self._pos[e2] = p2, p1
+
+    def _pos_priority(self, pos):
+        if 0 <= pos < len(self._elems):
+            return self._priority[self._elems[pos]]
+        return float("inf")
+
+
 class TreeError(Exception):
     pass
 
