@@ -84,6 +84,75 @@ class TreeError(Exception):
     pass
 
 
+class Forest:
+    ROOT_SENTINEL = object()
+
+    def __init__(self):
+        self._pred, self._succ = dict(), dict()
+
+    def __contains__(self, elem):
+        return elem is not None and elem in self._succ
+
+    def insert(self, elem, pred=None):
+        if elem in self:
+            raise ValueError(f"Element {elem} has already been inserted")
+        self._succ.setdefault(pred, []).append(elem)
+        self._pred[elem] = pred
+
+    def pred(self, elem):
+        return self._pred[elem]
+
+    def succ(self, elem):
+        yield from self._succ.get(elem, [])
+
+    def succs_dfs(self, node):
+        for s in self._succ[node]:
+            yield s
+            yield from self.succs_dfs(s)
+
+    def preds(self, elem, upto=None):
+        while elem != upto:
+            elem = self.pred(elem)
+            if elem is not None:
+                yield elem
+
+    def lca(self, x, y):
+        if self.pred(x) is None or self.pred(y) is None:
+            return None
+        seen = {x, y}
+        while x != y:
+            if self.pred(x) is not None:
+                x = self.pred(x)
+                if x in seen:
+                    return x
+                seen.add(x)
+            if self.pred(y) is not None:
+                y = self.pred(y)
+                if y in seen:
+                    return y
+                seen.add(y)
+        return x
+
+    def leq(self, a, b, upto=None):
+        while b != upto and b is not None:
+            b = self.pred(b)
+            if b == a:
+                return True
+        return False
+
+    def is_inorder(self, a, b, c):
+        return self.leq(a, b) and self.leq(b, c, upto=a)
+
+    def rebase(self, root, upto=None):
+        ...
+
+    # def rebase(self, base, child):
+    #     lca = self.lca(base, child)
+    #     assert self.is_inorder(
+    #         lca, include_upto, child
+    #     ), "include_upto must lie between child and LCA(base, child)"
+
+
 class DistributionNetwork:
     """Implementation of the network simplex algorithm on an abstract ST-network.
 
