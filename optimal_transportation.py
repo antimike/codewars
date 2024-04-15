@@ -209,6 +209,25 @@ def minimum_transportation_price(suppliers, consumers, costs):
     return network.get_mincost()
 
 
+def greedy(suppliers, consumers, costs):
+    import heapq
+
+    heap = []
+    for i, row in enumerate(costs):
+        for j, c in enumerate(row):
+            heapq.heappush(heap, (c, i, j))
+    flow, cost = 0, 0
+    F = sum(consumers)
+    while flow < F:
+        c, i, j = heapq.heappop(heap)
+        cap = min(suppliers[i], consumers[j])
+        flow += cap
+        suppliers[i] -= cap
+        consumers[j] -= cap
+        cost += c * cap
+    return cost
+
+
 def print_tree(parents):
     nodes = {}
     roots = []
